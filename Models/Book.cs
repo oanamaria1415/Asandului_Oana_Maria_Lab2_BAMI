@@ -10,5 +10,7 @@
         public Genre? Genre { get; set; }
         public ICollection<Order>? Orders { get; set; }
 
+          
+
     }
 }
