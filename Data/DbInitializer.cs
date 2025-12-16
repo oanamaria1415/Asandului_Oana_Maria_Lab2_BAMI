@@ -1,5 +1,7 @@
 ﻿using Asandului_Oana_Maria_Lab2.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.ConstrainedExecution;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Asandului_Oana_Maria_Lab2.Data
 {
@@ -15,23 +17,36 @@ namespace Asandului_Oana_Maria_Lab2.Data
                 {
                     return; // BD a fost creata anterior
                 }
+
+                var authors = new Author[]
+                   {
+                      new Author { FirstName = "Mihail", LastName = "Sadoveanu" },
+                      new Author { FirstName = "George", LastName = "Calinescu" },
+                      new Author { FirstName = "Mircea", LastName = "Eliade" }
+                      };
+
                 context.Book.AddRange(
-                new Book
-                {
-                    Title = "Baltagul",
-                    Author = "Mihail Sadoveanu",Price=Decimal.Parse("22")},
-               
-                new Book
-                {
-                    Title = "Enigma Otiliei",
-                    Author = "George Calinescu",Price=Decimal.Parse("18")},
-               
-                new Book
-                {
-                    Title = "Maytrei",
-                    Author = "Mircea Eliade",Price=Decimal.Parse("27")}
-               
-                );
+                       new Book
+               {
+                          Title = "Baltagul",
+                          Price = 22m,
+                          AuthorID = authors[0].ID
+                         },
+                        new Book
+                         {
+                           Title = "Enigma Otiliei",
+                           Price = 18m,
+                           AuthorID = authors[1].ID
+                             },
+                            new Book
+                                {
+                               Title = "Maytrei",
+                                Price = 27m,
+                               AuthorID = authors[2].ID
+                              }
+                       );
+
+                context.SaveChanges();
 
                 context.Genre.AddRange(
                new Genre { Name = "Roman" },

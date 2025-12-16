@@ -22,7 +22,7 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         // GET: Books
         public async Task<IActionResult> Index()
         {
-            var asandului_Oana_Maria_Lab2Context = _context.Book.Include(b => b.Genre);
+            var asandului_Oana_Maria_Lab2Context = _context.Book.Include(b => b.Genre).Include(b=> b.Author);
             return View(await asandului_Oana_Maria_Lab2Context.ToListAsync());
         }
 
@@ -35,6 +35,7 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
             }
 
             var book = await _context.Book
+                .Include(b => b.Author)
                 .Include(b => b.Genre)
                 .FirstOrDefaultAsync(m => m.ID == id);
             if (book == null)
@@ -49,6 +50,7 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         public IActionResult Create()
         {
             ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name");
+            ViewData["AuthorID"] = new SelectList(_context.Set<Author>(), "ID", "LastName");
             return View();
         }
 
@@ -57,7 +59,7 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,Title,Author,Price,GenreID")] Book book)
+        public async Task<IActionResult> Create([Bind("ID,Title,AuthorID,Price,GenreID")] Book book)
         {
             if (ModelState.IsValid)
             {
@@ -65,7 +67,9 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "ID", book.GenreID);
+
+            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name", book.GenreID);
+            ViewData["AuthorID"] = new SelectList(_context.Set<Author>(), "ID", "LastName", book.AuthorID);
             return View(book);
         }
 
@@ -82,7 +86,8 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
             {
                 return NotFound();
             }
-            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "ID", book.GenreID);
+            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name", book.GenreID);
+            ViewData["AuthorID"] = new SelectList(_context.Set<Author>(), "ID", "LastName", book.AuthorID);
             return View(book);
         }
 
@@ -91,7 +96,7 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,Title,Author,Price,GenreID")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("ID,Title,AuthorID,Price,GenreID")] Book book)
         {
             if (id != book.ID)
             {
@@ -118,7 +123,8 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "ID", book.GenreID);
+            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name", book.GenreID);
+            ViewData["AuthorID"] = new SelectList(_context.Set<Author>(), "ID", "LastName", book.AuthorID);
             return View(book);
         }
 
