@@ -18,6 +18,7 @@ namespace Asandului_Oana_Maria_Lab2.Data
         public DbSet<Asandului_Oana_Maria_Lab2.Models.Customer> Customer { get; set; } = default!;
         public DbSet<Asandului_Oana_Maria_Lab2.Models.Genre> Genre { get; set; } = default!;
         public DbSet<Asandului_Oana_Maria_Lab2.Models.Author> Author { get; set; } = default!;
+        public DbSet<Asandului_Oana_Maria_Lab2.Models.Order> Order { get; set; } = default!;
 
     }
 }

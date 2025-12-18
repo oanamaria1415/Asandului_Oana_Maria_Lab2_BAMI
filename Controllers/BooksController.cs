@@ -20,11 +20,52 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         }
 
         // GET: Books
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string sortOrder, string searchString)
         {
-            var asandului_Oana_Maria_Lab2Context = _context.Book.Include(b => b.Genre).Include(b=> b.Author);
-            return View(await asandului_Oana_Maria_Lab2Context.ToListAsync());
+            ViewData["TitleSortParm"] = String.IsNullOrEmpty(sortOrder) ? "title_desc" : "";
+            ViewData["PriceSortParm"] = sortOrder == "Price" ? "price_desc" : "Price";
+            ViewData["CurrentFilter"] = searchString;
+
+            var books = from b in _context.Book
+                        join a in _context.Author on b.AuthorID equals a.ID
+                        join g in _context.Genre on b.GenreID equals g.ID
+                        select new BookViewModel
+                        {
+                            ID = b.ID,
+                            Title = b.Title,
+                            Price = b.Price,
+                            LastName = a.LastName,
+                            GenreName = g.Name
+                        };
+
+
+            // 🔍 FILTRARE DUPĂ TITLU
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                books = books.Where(s => s.Title.Contains(searchString));
+            }
+
+            // 🔃 SORTARE
+            switch (sortOrder)
+            {
+                case "title_desc":
+                    books = books.OrderByDescending(b => b.Title);
+                    break;
+                case "Price":
+                    books = books.OrderBy(b => b.Price);
+                    break;
+                case "price_desc":
+                    books = books.OrderByDescending(b => b.Price);
+                    break;
+                default:
+                    books = books.OrderBy(b => b.Title);
+                    break;
+            }
+
+            return View(await books.AsNoTracking().ToListAsync());
         }
+
+
 
         // GET: Books/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -35,9 +76,10 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
             }
 
             var book = await _context.Book
-                .Include(b => b.Author)
-                .Include(b => b.Genre)
-                .FirstOrDefaultAsync(m => m.ID == id);
+  .Include(s => s.Orders)
+  .ThenInclude(e => e.Customer)
+  .AsNoTracking()
+  .FirstOrDefaultAsync(m => m.ID == id);
             if (book == null)
             {
                 return NotFound();
@@ -59,13 +101,24 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,Title,AuthorID,Price,GenreID")] Book book)
+        public async Task<IActionResult> Create([Bind("Title,Author,Price")] Book book)
         {
-            if (ModelState.IsValid)
+            try
             {
-                _context.Add(book);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                if (ModelState.IsValid)
+                {
+                    _context.Add(book);
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+
+            catch (DbUpdateException /* ex*/)
+            {
+
+                ModelState.AddModelError("", "Unable to save changes. " +
+                "Try again, and if the problem persists ");
             }
 
             ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name", book.GenreID);
@@ -96,37 +149,40 @@ namespace Asandului_Oana_Maria_Lab2.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,Title,AuthorID,Price,GenreID")] Book book)
+        [HttpPost, ActionName("Edit")]
+    
+        public async Task<IActionResult> EditPost(int? id)
         {
-            if (id != book.ID)
-            {
+            if (id == null)
                 return NotFound();
-            }
 
-            if (ModelState.IsValid)
+            var bookToUpdate = await _context.Book.FirstOrDefaultAsync(b => b.ID == id);
+            if (bookToUpdate == null)
+                return NotFound();
+
+            if (await TryUpdateModelAsync<Book>(
+                bookToUpdate,
+                "",
+                b => b.Title, b => b.Price, b => b.AuthorID, b => b.GenreID))
             {
                 try
                 {
-                    _context.Update(book);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
-                catch (DbUpdateConcurrencyException)
+                catch (DbUpdateException)
                 {
-                    if (!BookExists(book.ID))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    ModelState.AddModelError("", "Unable to save changes. Try again, and if the problem persists");
                 }
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name", book.GenreID);
-            ViewData["AuthorID"] = new SelectList(_context.Set<Author>(), "ID", "LastName", book.AuthorID);
-            return View(book);
+
+            // EXACT ca în a doua: refaci dropdown-urile
+            ViewData["GenreID"] = new SelectList(_context.Set<Genre>(), "ID", "Name", bookToUpdate.GenreID);
+            ViewData["AuthorID"] = new SelectList(_context.Set<Author>(), "ID", "LastName", bookToUpdate.AuthorID);
+
+            return View(bookToUpdate);
         }
+
 
         // GET: Books/Delete/5
         public async Task<IActionResult> Delete(int? id)
