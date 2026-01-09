@@ -63,5 +63,30 @@ channel = GrpcChannel.ForAddress("https://localhost:7256");
             });
             return RedirectToAction(nameof(Index));
         }
+
+        public IActionResult Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var client = new CustomerService.CustomerServiceClient(channel);
+            var customer = client.Get(new CustomerId { Id = id.Value });
+
+            if (customer == null || customer.CustomerId == 0) return NotFound();
+
+            return View(customer);
+        }
+
+
+        public IActionResult Edit(GrpcCustomersService.Customer customer)
+        {
+            if (!ModelState.IsValid) return View(customer);
+
+            var client = new CustomerService.CustomerServiceClient(channel);
+            var updated = client.Update(customer);
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
     }
 }
