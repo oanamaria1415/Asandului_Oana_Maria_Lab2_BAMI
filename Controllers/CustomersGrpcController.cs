@@ -1,8 +1,10 @@
 ﻿using Asandului_Oana_Maria_Lab2.Models;
 using Grpc.Net.Client;
 using GrpcCustomersService;
-using LibraryModel.Models;
 using Microsoft.AspNetCore.Mvc;
+using GrpcCustomer = GrpcCustomersService.Customer;
+
+
 namespace Nume_Pren_Lab2.Controllers
 {
     public class CustomersGrpcController : Controller
@@ -11,7 +13,7 @@ namespace Nume_Pren_Lab2.Controllers
         public CustomersGrpcController()
         {
 
-channel = GrpcChannel.ForAddress("https://localhost:5001");
+channel = GrpcChannel.ForAddress("https://localhost:7256");
         }
         [HttpGet]
         public IActionResult Index()
@@ -25,7 +27,7 @@ channel = GrpcChannel.ForAddress("https://localhost:5001");
             return View();
         }
         [HttpPost]
-        public IActionResult Create(Customer customer)
+        public IActionResult Create(GrpcCustomer customer)
         {
             if (ModelState.IsValid)
             {
@@ -44,7 +46,7 @@ channel = GrpcChannel.ForAddress("https://localhost:5001");
                 return NotFound();
             }
             var client = new CustomerService.CustomerServiceClient(channel);
-            Customer customer = client.Get(new CustomerId() { Id = (int)id });
+            GrpcCustomer customer = client.Get(new CustomerId() { Id = (int)id });
             if (customer == null)
             {
                 return NotFound();
